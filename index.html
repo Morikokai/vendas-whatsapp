@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema de Vendas</title>
+
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      cursor: pointer;
+      background: orange;
+      font-weight: bold;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .box {
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .colunas {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .coluna {
+      background: #1b1b1b;
+      padding: 15px;
+      border-radius: 10px;
+      min-height: 400px;
+    }
+
+    .coluna h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .card {
+      background: #222;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border-left: 5px solid orange;
+    }
+
+    .btn-preparo {
+      background: #f0ad4e;
+    }
+
+    .btn-entregue {
+      background: #28a745;
+      color: white;
+    }
+
+    .status {
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    @keyframes piscar {
+      0% { box-shadow: 0 0 5px lime; }
+      50% { box-shadow: 0 0 20px lime; }
+      100% { box-shadow: 0 0 5px lime; }
+    }
+
+    .novo-pedido {
+      border: 2px solid lime;
+      animation: piscar 1s infinite;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🍕 Sistema de vendas</h1>
+
+<div id="login">
+  <h2>Login</h2>
+
+  <input id="email" placeholder="Email"><br>
+  <input id="senha" type="password" placeholder="Senha"><br>
+
+  <button onclick="fazerLogin()">Entrar</button>
+</div>
+
+<div id="painel" style="display:none;">
+  <h2>Painel de pedidos</h2>
+
+  <div class="dashboard">
+    <div class="box">📦 Total: <span id="totalPedidos">0</span></div>
+    <div class="box">🟢 Novos: <span id="totalNovos">0</span></div>
+    <div class="box">🟡 Em preparo: <span id="totalPreparo">0</span></div>
+    <div class="box">🔵 Entregues: <span id="totalEntregues">0</span></div>
+  </div>
+
+  <div class="colunas">
+    <div class="coluna">
+      <h3>🟢 Novos</h3>
+      <div id="novos"></div>
+    </div>
+
+    <div class="coluna">
+      <h3>🟡 Em preparo</h3>
+      <div id="preparo"></div>
+    </div>
+
+    <div class="coluna">
+      <h3>🔵 Entregues</h3>
+      <div id="entregues"></div>
+    </div>
+  </div>
+</div>
+
+<audio id="somNotificacao" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+let token = '';
+
+const socket = io();
+
+socket.on('connect', () => {
+  console.log('Socket conectado:', socket.id);
+});
+
+socket.on('nova_venda', () => {
+  console.log('Nova venda recebida');
+
+  const audio = document.getElementById('somNotificacao');
+
+  audio.play().catch(() => {
+    console.log('O navegador bloqueou o som até o usuário clicar na página.');
+  });
+
+  carregarVendas();
+});
+
+socket.on('status_atualizado', () => {
+  console.log('Status atualizado');
+  carregarVendas();
+});
+
+async function fazerLogin() {
+  const email = document.getElementById('email').value;
+  const senha = document.getElementById('senha').value;
+
+  const res = await fetch('http://localhost:3000/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email, senha })
+  });
+
+  const data = await res.json();
+
+  if (data.token) {
+    token = data.token;
+
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('painel').style.display = 'block';
+
+    carregarVendas();
+  } else {
+    alert('Erro no login');
+  }
+}
+
+async function carregarVendas() {
+  const res = await fetch('http://localhost:3000/vendas', {
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  });
+
+  const vendas = await res.json();
+
+  const total = vendas.length;
+  const novos = vendas.filter(v => v.status === 'novo').length;
+  const preparo = vendas.filter(v => v.status === 'em preparo').length;
+  const entregues = vendas.filter(v => v.status === 'entregue').length;
+
+  document.getElementById('totalPedidos').innerText = total;
+  document.getElementById('totalNovos').innerText = novos;
+  document.getElementById('totalPreparo').innerText = preparo;
+  document.getElementById('totalEntregues').innerText = entregues;
+
+  document.getElementById('novos').innerHTML = '';
+  document.getElementById('preparo').innerHTML = '';
+  document.getElementById('entregues').innerHTML = '';
+
+  vendas.forEach(v => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    if (v.status === 'novo') {
+      div.classList.add('novo-pedido');
+    }
+
+    div.innerHTML = `
+      <b>${v.cliente}</b><br>
+      ${v.produto} (${v.sabor || '-'})<br>
+      💳 ${v.pagamento || '-'}<br>
+      <span class="status">Status: ${v.status}</span><br><br>
+    `;
+
+    if (v.status === 'novo') {
+      div.innerHTML += `
+        <button class="btn-preparo" onclick="mudarStatus(${v.id}, 'em preparo')">
+          Em preparo
+        </button>
+      `;
+      document.getElementById('novos').appendChild(div);
+    }
+
+    else if (v.status === 'em preparo') {
+      div.innerHTML += `
+        <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
+          Entregue
+        </button>
+      `;
+      document.getElementById('preparo').appendChild(div);
+    }
+
+    else if (v.status === 'entregue') {
+      document.getElementById('entregues').appendChild(div);
+    }
+
+    else {
+      document.getElementById('novos').appendChild(div);
+    }
+  });
+}
+
+async function mudarStatus(id, status) {
+  await fetch(`http://localhost:3000/vendas/${id}/status`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token
+    },
+    body: JSON.stringify({ status })
+  });
+}
+</script>
+
+</body>
+</html>
