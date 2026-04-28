@@ -113,9 +113,9 @@ app.post('/webhook', async (req, res) => {
     res.sendStatus(200);
 
   } catch (erro) {
-    console.error("Erro no webhook:", erro.response?.data || erro.message);
-    res.sendStatus(500);
-  }
+  console.error("Erro no webhook:", erro);
+  res.sendStatus(500);
+}
 });
 
 app.get('/vendas', async (req, res) => {
