@@ -14,9 +14,7 @@ const app = express();
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: {
-    origin: '*'
-  }
+  cors: { origin: '*' }
 });
 
 io.on('connection', (socket) => {
@@ -31,7 +29,6 @@ app.get('/', (req, res) => {
   res.send('Servidor rodando 🚀');
 });
 
-// VERIFICAÇÃO DO WEBHOOK DA META
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -45,12 +42,10 @@ app.get('/webhook', (req, res) => {
   return res.sendStatus(403);
 });
 
-// RECEBE MENSAGENS DO WHATSAPP E TESTE LOCAL
 app.post('/webhook', async (req, res) => {
   try {
     console.log("Recebido da Meta:", JSON.stringify(req.body, null, 2));
 
-    // 🔥 PEGAR DADOS CORRETOS DO WHATSAPP
     const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
     const value = changes?.value;
@@ -72,17 +67,17 @@ app.post('/webhook', async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // 💾 SALVAR NO BANCO
     const resultado = await pool.query(
-      `INSERT INTO vendas (cliente, produto, sabor, pagamento, status)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO vendas (cliente, produto, sabor, pagamento, status, telefone)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         pedido.cliente,
         pedido.produto,
         pedido.sabor || null,
         pedido.pagamento || null,
-        'novo'
+        'novo',
+        numeroCliente
       ]
     );
 
@@ -92,31 +87,37 @@ app.post('/webhook', async (req, res) => {
 
     io.emit('nova_venda', venda);
 
-    // 🤖 RESPONDER NO WHATSAPP
-    await axios.post(
-      `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to: numeroCliente,
-        text: {
-          body: `✅ Pedido recebido!\n\n👤 Cliente: ${pedido.cliente}\n🍕 Produto: ${pedido.produto}`
-        }
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json"
-        }
-      }
+    await enviarMensagemWhatsApp(
+      numeroCliente,
+      `✅ Pedido recebido!\n\n👤 Cliente: ${pedido.cliente}\n🍕 Produto: ${pedido.produto}\n\nSeu pedido entrou no sistema.`
     );
 
     res.sendStatus(200);
 
   } catch (erro) {
-  console.error("Erro no webhook:", erro);
-  res.sendStatus(500);
-}
+    console.error("Erro no webhook:", erro);
+    res.sendStatus(500);
+  }
 });
+
+async function enviarMensagemWhatsApp(numero, texto) {
+  await axios.post(
+    `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
+    {
+      messaging_product: "whatsapp",
+      to: numero,
+      text: {
+        body: texto
+      }
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+}
 
 app.get('/vendas', async (req, res) => {
   try {
@@ -156,6 +157,26 @@ app.put('/vendas/:id/status', async (req, res) => {
     const vendaAtualizada = resultado.rows[0];
 
     io.emit('status_atualizado', vendaAtualizada);
+
+    if (vendaAtualizada.telefone) {
+      let mensagem = '';
+
+      if (status === 'em preparo') {
+        mensagem = `🟡 Olá, ${vendaAtualizada.cliente}!\n\nSeu pedido está em preparo. 🍕`;
+      }
+
+      if (status === 'entregue') {
+        mensagem = `✅ Olá, ${vendaAtualizada.cliente}!\n\nSeu pedido foi entregue. Obrigado pela preferência!`;
+      }
+
+      if (status === 'novo') {
+        mensagem = `🟢 Olá, ${vendaAtualizada.cliente}!\n\nSeu pedido voltou para a fila de novos pedidos.`;
+      }
+
+      if (mensagem) {
+        await enviarMensagemWhatsApp(vendaAtualizada.telefone, mensagem);
+      }
+    }
 
     res.json({ ok: true, venda: vendaAtualizada });
 
