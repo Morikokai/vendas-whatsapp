@@ -8,7 +8,7 @@
     body {
       background: #111;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
       padding: 20px;
     }
 
@@ -73,6 +73,11 @@
 
     .btn-entregue {
       background: #28a745;
+      color: white;
+    }
+
+    .btn-voltar {
+      background: #777;
       color: white;
     }
 
@@ -151,19 +156,16 @@ socket.on('connect', () => {
 });
 
 socket.on('nova_venda', () => {
-  console.log('Nova venda recebida');
-
   const audio = document.getElementById('somNotificacao');
 
   audio.play().catch(() => {
-    console.log('O navegador bloqueou o som até o usuário clicar na página.');
+    console.log('Som bloqueado até o usuário clicar na página.');
   });
 
   carregarVendas();
 });
 
 socket.on('status_atualizado', () => {
-  console.log('Status atualizado');
   carregarVendas();
 });
 
@@ -209,15 +211,10 @@ async function carregarVendas() {
 
     const vendas = await res.json();
 
-    const total = vendas.length;
-    const novos = vendas.filter(v => v.status === 'novo').length;
-    const preparo = vendas.filter(v => v.status === 'em preparo').length;
-    const entregues = vendas.filter(v => v.status === 'entregue').length;
-
-    document.getElementById('totalPedidos').innerText = total;
-    document.getElementById('totalNovos').innerText = novos;
-    document.getElementById('totalPreparo').innerText = preparo;
-    document.getElementById('totalEntregues').innerText = entregues;
+    document.getElementById('totalPedidos').innerText = vendas.length;
+    document.getElementById('totalNovos').innerText = vendas.filter(v => v.status === 'novo').length;
+    document.getElementById('totalPreparo').innerText = vendas.filter(v => v.status === 'em preparo').length;
+    document.getElementById('totalEntregues').innerText = vendas.filter(v => v.status === 'entregue').length;
 
     document.getElementById('novos').innerHTML = '';
     document.getElementById('preparo').innerHTML = '';
@@ -231,14 +228,19 @@ async function carregarVendas() {
         div.classList.add('novo-pedido');
       }
 
+      const dataPedido = v.criado_em
+        ? new Date(v.criado_em).toLocaleString('pt-BR')
+        : 'Sem horário';
+
       div.innerHTML = `
         <b>${v.cliente}</b><br>
-        ${v.produto} (${v.sabor || '-'})<br>
+        🍕 ${v.produto} (${v.sabor || '-'})<br>
         💳 ${v.pagamento || '-'}<br>
+        📱 ${v.telefone || '-'}<br>
         <span class="status">
-  Status: ${v.status}<br>
-  🕒 ${new Date(v.criado_em).toLocaleString()}
-</span><br><br>
+          Status: ${v.status}<br>
+          🕒 ${dataPedido}
+        </span><br><br>
       `;
 
       if (v.status === 'novo') {
@@ -251,16 +253,11 @@ async function carregarVendas() {
       }
 
       else if (v.status === 'em preparo') {
-  div.innerHTML += `
-    <button onclick="mudarStatus(${v.id}, 'novo')">
-      ⬅ Voltar
-    </button>
-
-    <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
-      Entregue
-    </button>
-  `;
         div.innerHTML += `
+          <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'novo')">
+            ⬅ Voltar
+          </button>
+
           <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
             Entregue
           </button>
@@ -269,11 +266,11 @@ async function carregarVendas() {
       }
 
       else if (v.status === 'entregue') {
-  div.innerHTML += `
-    <button onclick="mudarStatus(${v.id}, 'em preparo')">
-      ⬅ Voltar preparo
-    </button>
-  `;
+        div.innerHTML += `
+          <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'em preparo')">
+            ⬅ Voltar preparo
+          </button>
+        `;
         document.getElementById('entregues').appendChild(div);
       }
 
