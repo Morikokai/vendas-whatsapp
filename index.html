@@ -235,7 +235,10 @@ async function carregarVendas() {
         <b>${v.cliente}</b><br>
         ${v.produto} (${v.sabor || '-'})<br>
         💳 ${v.pagamento || '-'}<br>
-        <span class="status">Status: ${v.status}</span><br><br>
+        <span class="status">
+  Status: ${v.status}<br>
+  🕒 ${new Date(v.criado_em).toLocaleString()}
+</span><br><br>
       `;
 
       if (v.status === 'novo') {
@@ -248,6 +251,15 @@ async function carregarVendas() {
       }
 
       else if (v.status === 'em preparo') {
+  div.innerHTML += `
+    <button onclick="mudarStatus(${v.id}, 'novo')">
+      ⬅ Voltar
+    </button>
+
+    <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
+      Entregue
+    </button>
+  `;
         div.innerHTML += `
           <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
             Entregue
@@ -257,6 +269,11 @@ async function carregarVendas() {
       }
 
       else if (v.status === 'entregue') {
+  div.innerHTML += `
+    <button onclick="mudarStatus(${v.id}, 'em preparo')">
+      ⬅ Voltar preparo
+    </button>
+  `;
         document.getElementById('entregues').appendChild(div);
       }
 
