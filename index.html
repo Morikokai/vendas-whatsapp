@@ -1,144 +1,320 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistema de Vendas</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background: #111;
-      color: white;
+      margin: 0;
+      background: #0f0f0f;
+      color: #fff;
       font-family: Arial, sans-serif;
-      padding: 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #ff9900, #ff5e00);
+      padding: 22px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .usuario {
+      font-size: 14px;
+      background: rgba(0,0,0,0.25);
+      padding: 8px 12px;
+      border-radius: 20px;
+    }
+
+    main {
+      padding: 25px;
+    }
+
+    .login-box {
+      max-width: 380px;
+      margin: 100px auto;
+      background: #1b1b1b;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 0 30px rgba(255,153,0,0.15);
     }
 
     input, button {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 6px;
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
       border: none;
+      font-size: 15px;
+    }
+
+    input {
+      background: #2a2a2a;
+      color: white;
+      outline: none;
     }
 
     button {
       cursor: pointer;
-      background: orange;
       font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+      opacity: 0.9;
+    }
+
+    .btn-login {
+      background: #ff9900;
+      color: #111;
+    }
+
+    .topo-painel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .topo-painel input {
+      max-width: 320px;
+      margin: 0;
     }
 
     .dashboard {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin: 20px 0;
+      gap: 15px;
+      margin-bottom: 25px;
     }
 
     .box {
-      background: #222;
-      padding: 15px;
-      border-radius: 10px;
-      font-weight: bold;
-      text-align: center;
+      background: #1c1c1c;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 0 18px rgba(0,0,0,0.25);
+      border: 1px solid #2a2a2a;
     }
+
+    .box span {
+      display: block;
+      font-size: 32px;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
+    .total { border-left: 5px solid #fff; }
+    .novo { border-left: 5px solid #00d000; }
+    .preparo { border-left: 5px solid #ffdd00; }
+    .entregue { border-left: 5px solid #008cff; }
 
     .colunas {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      margin-top: 20px;
+      gap: 18px;
     }
 
     .coluna {
-      background: #1b1b1b;
+      background: #181818;
+      border-radius: 18px;
       padding: 15px;
-      border-radius: 10px;
-      min-height: 400px;
+      min-height: 500px;
+      border: 1px solid #2a2a2a;
     }
 
     .coluna h3 {
       text-align: center;
-      margin-top: 0;
+      margin: 5px 0 15px;
+      font-size: 20px;
     }
 
     .card {
-      background: #222;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border-left: 5px solid orange;
+      background: #242424;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.35);
+      border-left: 6px solid orange;
+    }
+
+    .card.novo-pedido {
+      border-left-color: #00d000;
+      animation: brilho 1.2s infinite;
+    }
+
+    .card.preparo-card {
+      border-left-color: #ffdd00;
+    }
+
+    .card.entregue-card {
+      border-left-color: #008cff;
+      opacity: 0.85;
+    }
+
+    @keyframes brilho {
+      0% { box-shadow: 0 0 5px #00d000; }
+      50% { box-shadow: 0 0 18px #00d000; }
+      100% { box-shadow: 0 0 5px #00d000; }
+    }
+
+    .cliente {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .info {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #ddd;
+    }
+
+    .status-tag {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .tag-novo {
+      background: #00d000;
+      color: #061006;
+    }
+
+    .tag-preparo {
+      background: #ffdd00;
+      color: #111;
+    }
+
+    .tag-entregue {
+      background: #008cff;
+      color: white;
+    }
+
+    .acoes {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .acoes button {
+      width: auto;
+      padding: 9px 12px;
+      margin: 0;
+      font-size: 13px;
     }
 
     .btn-preparo {
-      background: #f0ad4e;
+      background: #ffdd00;
+      color: #111;
     }
 
     .btn-entregue {
-      background: #28a745;
+      background: #22c55e;
       color: white;
     }
 
     .btn-voltar {
-      background: #777;
+      background: #666;
       color: white;
     }
 
-    .status {
-      color: #ccc;
+    .vazio {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
       font-size: 14px;
     }
 
-    @keyframes piscar {
-      0% { box-shadow: 0 0 5px lime; }
-      50% { box-shadow: 0 0 20px lime; }
-      100% { box-shadow: 0 0 5px lime; }
-    }
+    @media (max-width: 900px) {
+      .dashboard,
+      .colunas {
+        grid-template-columns: 1fr;
+      }
 
-    .novo-pedido {
-      border: 2px solid lime;
-      animation: piscar 1s infinite;
+      header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+
+      .topo-painel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .topo-painel input {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<h1>🍕 Sistema de vendas</h1>
+<header>
+  <h1>🍕 Sistema de Vendas</h1>
+  <div class="usuario">Painel online • Render</div>
+</header>
 
-<div id="login">
-  <h2>Login</h2>
+<main>
 
-  <input id="email" placeholder="Email"><br>
-  <input id="senha" type="password" placeholder="Senha"><br>
-
-  <button onclick="fazerLogin()">Entrar</button>
-</div>
-
-<div id="painel" style="display:none;">
-  <h2>Painel de pedidos</h2>
-
-  <div class="dashboard">
-    <div class="box">📦 Total: <span id="totalPedidos">0</span></div>
-    <div class="box">🟢 Novos: <span id="totalNovos">0</span></div>
-    <div class="box">🟡 Em preparo: <span id="totalPreparo">0</span></div>
-    <div class="box">🔵 Entregues: <span id="totalEntregues">0</span></div>
+  <div id="login" class="login-box">
+    <h2>Entrar no painel</h2>
+    <input id="email" placeholder="Email" />
+    <input id="senha" type="password" placeholder="Senha" />
+    <button class="btn-login" onclick="fazerLogin()">Entrar</button>
   </div>
 
-  <div class="colunas">
-    <div class="coluna">
-      <h3>🟢 Novos</h3>
-      <div id="novos"></div>
+  <div id="painel" style="display:none;">
+
+    <div class="topo-painel">
+      <h2>Painel de pedidos</h2>
+      <input id="busca" placeholder="Buscar cliente, produto ou pagamento..." oninput="filtrarVendas()" />
     </div>
 
-    <div class="coluna">
-      <h3>🟡 Em preparo</h3>
-      <div id="preparo"></div>
+    <div class="dashboard">
+      <div class="box total">📦 Total <span id="totalPedidos">0</span></div>
+      <div class="box novo">🟢 Novos <span id="totalNovos">0</span></div>
+      <div class="box preparo">🟡 Em preparo <span id="totalPreparo">0</span></div>
+      <div class="box entregue">🔵 Entregues <span id="totalEntregues">0</span></div>
     </div>
 
-    <div class="coluna">
-      <h3>🔵 Entregues</h3>
-      <div id="entregues"></div>
+    <div class="colunas">
+      <div class="coluna">
+        <h3>🟢 Novos</h3>
+        <div id="novos"></div>
+      </div>
+
+      <div class="coluna">
+        <h3>🟡 Em preparo</h3>
+        <div id="preparo"></div>
+      </div>
+
+      <div class="coluna">
+        <h3>🔵 Entregues</h3>
+        <div id="entregues"></div>
+      </div>
     </div>
+
   </div>
-</div>
+</main>
 
 <audio id="somNotificacao" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
@@ -148,6 +324,7 @@
 const API_URL = 'https://vendas-whatsapp.onrender.com';
 
 let token = '';
+let todasVendas = [];
 
 const socket = io(API_URL);
 
@@ -159,7 +336,7 @@ socket.on('nova_venda', () => {
   const audio = document.getElementById('somNotificacao');
 
   audio.play().catch(() => {
-    console.log('Som bloqueado até o usuário clicar na página.');
+    console.log('Som bloqueado até clicar na página.');
   });
 
   carregarVendas();
@@ -170,15 +347,18 @@ socket.on('status_atualizado', () => {
 });
 
 async function fazerLogin() {
-  const email = document.getElementById('email').value;
-  const senha = document.getElementById('senha').value;
+  const email = document.getElementById('email').value.trim();
+  const senha = document.getElementById('senha').value.trim();
+
+  if (!email || !senha) {
+    alert('Preencha email e senha');
+    return;
+  }
 
   try {
     const res = await fetch(`${API_URL}/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha })
     });
 
@@ -192,7 +372,7 @@ async function fazerLogin() {
 
       carregarVendas();
     } else {
-      alert('Erro no login');
+      alert('Login inválido');
     }
 
   } catch (erro) {
@@ -209,80 +389,140 @@ async function carregarVendas() {
       }
     });
 
-    const vendas = await res.json();
-
-    document.getElementById('totalPedidos').innerText = vendas.length;
-    document.getElementById('totalNovos').innerText = vendas.filter(v => v.status === 'novo').length;
-    document.getElementById('totalPreparo').innerText = vendas.filter(v => v.status === 'em preparo').length;
-    document.getElementById('totalEntregues').innerText = vendas.filter(v => v.status === 'entregue').length;
-
-    document.getElementById('novos').innerHTML = '';
-    document.getElementById('preparo').innerHTML = '';
-    document.getElementById('entregues').innerHTML = '';
-
-    vendas.forEach(v => {
-      const div = document.createElement('div');
-      div.className = 'card';
-
-      if (v.status === 'novo') {
-        div.classList.add('novo-pedido');
-      }
-
-      const dataPedido = v.criado_em
-        ? new Date(v.criado_em).toLocaleString('pt-BR')
-        : 'Sem horário';
-
-      div.innerHTML = `
-        <b>${v.cliente}</b><br>
-        🍕 ${v.produto} (${v.sabor || '-'})<br>
-        💳 ${v.pagamento || '-'}<br>
-        📱 ${v.telefone || '-'}<br>
-        <span class="status">
-          Status: ${v.status}<br>
-          🕒 ${dataPedido}
-        </span><br><br>
-      `;
-
-      if (v.status === 'novo') {
-        div.innerHTML += `
-          <button class="btn-preparo" onclick="mudarStatus(${v.id}, 'em preparo')">
-            Em preparo
-          </button>
-        `;
-        document.getElementById('novos').appendChild(div);
-      }
-
-      else if (v.status === 'em preparo') {
-        div.innerHTML += `
-          <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'novo')">
-            ⬅ Voltar
-          </button>
-
-          <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
-            Entregue
-          </button>
-        `;
-        document.getElementById('preparo').appendChild(div);
-      }
-
-      else if (v.status === 'entregue') {
-        div.innerHTML += `
-          <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'em preparo')">
-            ⬅ Voltar preparo
-          </button>
-        `;
-        document.getElementById('entregues').appendChild(div);
-      }
-
-      else {
-        document.getElementById('novos').appendChild(div);
-      }
-    });
+    todasVendas = await res.json();
+    renderizarVendas(todasVendas);
 
   } catch (erro) {
     console.error('Erro ao carregar vendas:', erro);
     alert('Erro ao carregar vendas');
   }
+}
+
+function filtrarVendas() {
+  const termo = document.getElementById('busca').value.toLowerCase();
+
+  const filtradas = todasVendas.filter(v => {
+    return (
+      String(v.cliente || '').toLowerCase().includes(termo) ||
+      String(v.produto || '').toLowerCase().includes(termo) ||
+      String(v.sabor || '').toLowerCase().includes(termo) ||
+      String(v.pagamento || '').toLowerCase().includes(termo) ||
+      String(v.telefone || '').toLowerCase().includes(termo)
+    );
+  });
+
+  renderizarVendas(filtradas);
+}
+
+function renderizarVendas(vendas) {
+  document.getElementById('totalPedidos').innerText = vendas.length;
+  document.getElementById('totalNovos').innerText = vendas.filter(v => v.status === 'novo').length;
+  document.getElementById('totalPreparo').innerText = vendas.filter(v => v.status === 'em preparo').length;
+  document.getElementById('totalEntregues').innerText = vendas.filter(v => v.status === 'entregue').length;
+
+  document.getElementById('novos').innerHTML = '';
+  document.getElementById('preparo').innerHTML = '';
+  document.getElementById('entregues').innerHTML = '';
+
+  vendas.forEach(v => {
+    const card = criarCardVenda(v);
+
+    if (v.status === 'novo') {
+      document.getElementById('novos').appendChild(card);
+    } else if (v.status === 'em preparo') {
+      document.getElementById('preparo').appendChild(card);
+    } else if (v.status === 'entregue') {
+      document.getElementById('entregues').appendChild(card);
+    } else {
+      document.getElementById('novos').appendChild(card);
+    }
+  });
+
+  mostrarVazio('novos');
+  mostrarVazio('preparo');
+  mostrarVazio('entregues');
+}
+
+function mostrarVazio(id) {
+  const coluna = document.getElementById(id);
+
+  if (coluna.children.length === 0) {
+    coluna.innerHTML = `<div class="vazio">Nenhum pedido aqui</div>`;
+  }
+}
+
+function criarCardVenda(v) {
+  const div = document.createElement('div');
+
+  let classeStatus = '';
+  let tagStatus = '';
+
+  if (v.status === 'novo') {
+    classeStatus = 'novo-pedido';
+    tagStatus = 'tag-novo';
+  } else if (v.status === 'em preparo') {
+    classeStatus = 'preparo-card';
+    tagStatus = 'tag-preparo';
+  } else if (v.status === 'entregue') {
+    classeStatus = 'entregue-card';
+    tagStatus = 'tag-entregue';
+  }
+
+  div.className = `card ${classeStatus}`;
+
+  const dataPedido = v.criado_em
+    ? new Date(v.criado_em).toLocaleString('pt-BR')
+    : 'Sem horário';
+
+  div.innerHTML = `
+    <div class="cliente">👤 ${v.cliente || 'Cliente não informado'}</div>
+
+    <div class="info">
+      🍕 Produto: <b>${v.produto || '-'}</b><br>
+      🧂 Sabor: <b>${v.sabor || '-'}</b><br>
+      💳 Pagamento: <b>${v.pagamento || '-'}</b><br>
+      📱 Telefone: <b>${v.telefone || '-'}</b><br>
+      🕒 Horário: <b>${dataPedido}</b>
+    </div>
+
+    <div class="status-tag ${tagStatus}">
+      ${v.status || 'novo'}
+    </div>
+
+    <div class="acoes" id="acoes-${v.id}"></div>
+  `;
+
+  const acoes = div.querySelector(`#acoes-${v.id}`);
+
+  if (v.status === 'novo') {
+    acoes.innerHTML = `
+      <button class="btn-preparo" onclick="mudarStatus(${v.id}, 'em preparo')">
+        🟡 Em preparo
+      </button>
+    `;
+  }
+
+  else if (v.status === 'em preparo') {
+    acoes.innerHTML = `
+      <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'novo')">
+        ⬅ Voltar
+      </button>
+
+      <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
+        ✅ Entregue
+      </button>
+    `;
+  }
+
+  else if (v.status === 'entregue') {
+    acoes.innerHTML = `
+      <button class="btn-voltar" onclick="mudarStatus(${v.id}, 'em preparo')">
+        ⬅ Voltar preparo
+      </button>
+    `;
+  }
+
+  return div;
 }
 
 async function mudarStatus(id, status) {
