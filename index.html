@@ -93,6 +93,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <h1>🍕 Sistema de vendas</h1>
@@ -136,12 +137,14 @@
 
 <audio id="somNotificacao" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://vendas-whatsapp.onrender.com/socket.io/socket.io.js"></script>
 
 <script>
+const API_URL = 'https://vendas-whatsapp.onrender.com';
+
 let token = '';
 
-const socket = io();
+const socket = io(API_URL);
 
 socket.on('connect', () => {
   console.log('Socket conectado:', socket.id);
@@ -168,103 +171,130 @@ async function fazerLogin() {
   const email = document.getElementById('email').value;
   const senha = document.getElementById('senha').value;
 
-  const res = await fetch('http://localhost:3000/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email, senha })
-  });
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, senha })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (data.token) {
-    token = data.token;
+    if (data.token) {
+      token = data.token;
 
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('painel').style.display = 'block';
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('painel').style.display = 'block';
 
-    carregarVendas();
-  } else {
-    alert('Erro no login');
+      carregarVendas();
+    } else {
+      alert('Erro no login');
+    }
+
+  } catch (erro) {
+    console.error('Erro no login:', erro);
+    alert('Erro ao conectar com o servidor');
   }
 }
 
 async function carregarVendas() {
-  const res = await fetch('http://localhost:3000/vendas', {
-    headers: {
-      Authorization: 'Bearer ' + token
-    }
-  });
+  try {
+    const res = await fetch(`${API_URL}/vendas`, {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    });
 
-  const vendas = await res.json();
+    const vendas = await res.json();
 
-  const total = vendas.length;
-  const novos = vendas.filter(v => v.status === 'novo').length;
-  const preparo = vendas.filter(v => v.status === 'em preparo').length;
-  const entregues = vendas.filter(v => v.status === 'entregue').length;
+    const total = vendas.length;
+    const novos = vendas.filter(v => v.status === 'novo').length;
+    const preparo = vendas.filter(v => v.status === 'em preparo').length;
+    const entregues = vendas.filter(v => v.status === 'entregue').length;
 
-  document.getElementById('totalPedidos').innerText = total;
-  document.getElementById('totalNovos').innerText = novos;
-  document.getElementById('totalPreparo').innerText = preparo;
-  document.getElementById('totalEntregues').innerText = entregues;
+    document.getElementById('totalPedidos').innerText = total;
+    document.getElementById('totalNovos').innerText = novos;
+    document.getElementById('totalPreparo').innerText = preparo;
+    document.getElementById('totalEntregues').innerText = entregues;
 
-  document.getElementById('novos').innerHTML = '';
-  document.getElementById('preparo').innerHTML = '';
-  document.getElementById('entregues').innerHTML = '';
+    document.getElementById('novos').innerHTML = '';
+    document.getElementById('preparo').innerHTML = '';
+    document.getElementById('entregues').innerHTML = '';
 
-  vendas.forEach(v => {
-    const div = document.createElement('div');
-    div.className = 'card';
+    vendas.forEach(v => {
+      const div = document.createElement('div');
+      div.className = 'card';
 
-    if (v.status === 'novo') {
-      div.classList.add('novo-pedido');
-    }
+      if (v.status === 'novo') {
+        div.classList.add('novo-pedido');
+      }
 
-    div.innerHTML = `
-      <b>${v.cliente}</b><br>
-      ${v.produto} (${v.sabor || '-'})<br>
-      💳 ${v.pagamento || '-'}<br>
-      <span class="status">Status: ${v.status}</span><br><br>
-    `;
-
-    if (v.status === 'novo') {
-      div.innerHTML += `
-        <button class="btn-preparo" onclick="mudarStatus(${v.id}, 'em preparo')">
-          Em preparo
-        </button>
+      div.innerHTML = `
+        <b>${v.cliente}</b><br>
+        ${v.produto} (${v.sabor || '-'})<br>
+        💳 ${v.pagamento || '-'}<br>
+        <span class="status">Status: ${v.status}</span><br><br>
       `;
-      document.getElementById('novos').appendChild(div);
-    }
 
-    else if (v.status === 'em preparo') {
-      div.innerHTML += `
-        <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
-          Entregue
-        </button>
-      `;
-      document.getElementById('preparo').appendChild(div);
-    }
+      if (v.status === 'novo') {
+        div.innerHTML += `
+          <button class="btn-preparo" onclick="mudarStatus(${v.id}, 'em preparo')">
+            Em preparo
+          </button>
+        `;
+        document.getElementById('novos').appendChild(div);
+      }
 
-    else if (v.status === 'entregue') {
-      document.getElementById('entregues').appendChild(div);
-    }
+      else if (v.status === 'em preparo') {
+        div.innerHTML += `
+          <button class="btn-entregue" onclick="mudarStatus(${v.id}, 'entregue')">
+            Entregue
+          </button>
+        `;
+        document.getElementById('preparo').appendChild(div);
+      }
 
-    else {
-      document.getElementById('novos').appendChild(div);
-    }
-  });
+      else if (v.status === 'entregue') {
+        document.getElementById('entregues').appendChild(div);
+      }
+
+      else {
+        document.getElementById('novos').appendChild(div);
+      }
+    });
+
+  } catch (erro) {
+    console.error('Erro ao carregar vendas:', erro);
+    alert('Erro ao carregar vendas');
+  }
 }
 
 async function mudarStatus(id, status) {
-  await fetch(`http://localhost:3000/vendas/${id}/status`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + token
-    },
-    body: JSON.stringify({ status })
-  });
+  try {
+    const res = await fetch(`${API_URL}/vendas/${id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token
+      },
+      body: JSON.stringify({ status })
+    });
+
+    if (!res.ok) {
+      const erro = await res.text();
+      console.error('Erro ao mudar status:', erro);
+      alert('Erro ao mudar status');
+      return;
+    }
+
+    carregarVendas();
+
+  } catch (erro) {
+    console.error('Erro ao mudar status:', erro);
+    alert('Erro ao conectar com o servidor');
+  }
 }
 </script>
 
